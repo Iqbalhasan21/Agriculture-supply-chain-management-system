@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FarmDirect | Codex Implementation Brief</title>
+<style>
+  :root { --ink:#17231d; --muted:#53635a; --green:#176b45; --green-soft:#eaf4ed; --line:#d6e0d9; --amber:#8a4c08; --amber-soft:#fff4df; --red:#9f2d25; --red-soft:#fff0ed; --paper:#fff; }
+  * { box-sizing:border-box; }
+  body { margin:0; color:var(--ink); background:#e9eee9; font:10pt/1.4 "Nirmala UI","Noto Sans Bengali","Segoe UI",sans-serif; }
+  .sheet { width:210mm; min-height:297mm; margin:12mm auto; padding:12mm 18mm 12mm; background:var(--paper); box-shadow:0 3mm 12mm #1732221a; position:relative; }
+  .topline { display:flex; justify-content:space-between; color:var(--green); font-size:9pt; font-weight:700; border-bottom:1px solid var(--line); padding-bottom:7px; }
+  h1 { font-size:24pt; line-height:1.2; margin:12px 0 4px; }
+  h2 { font-size:15pt; line-height:1.25; margin:14px 0 6px; color:var(--green); }
+  h3 { font-size:11.5pt; margin:0 0 5px; }
+  p { margin:3px 0 6px; }
+  .lead { color:var(--muted); font-size:11.5pt; max-width:640px; }
+  .meta { display:flex; gap:8px; margin:12px 0 15px; flex-wrap:wrap; }
+  .tag { border:1px solid var(--line); padding:4px 8px; border-radius:4px; font-size:8.5pt; color:var(--muted); }
+  .callout { padding:10px 12px; background:var(--green-soft); border-left:3px solid var(--green); margin:12px 0; }
+  .item { border-top:1px solid var(--line); padding:7px 0 6px; }
+  .item:first-of-type { border-top:0; }
+  .item-head { display:flex; align-items:baseline; gap:8px; }
+  .num { color:var(--green); font-weight:800; min-width:22px; }
+  .status { font-size:8pt; font-weight:700; border-radius:3px; padding:2px 6px; white-space:nowrap; }
+  .gap { color:var(--red); background:var(--red-soft); }
+  .partial { color:var(--amber); background:var(--amber-soft); }
+  .ok { color:var(--green); background:var(--green-soft); }
+  ul { margin:5px 0 0 20px; padding:0; }
+  li { margin:3px 0; }
+  .small { font-size:9pt; color:var(--muted); }
+  .priority { border:1px solid var(--line); border-radius:5px; padding:7px 9px; margin:6px 0; break-inside:avoid; }
+  .priority.p0 { border-left:4px solid var(--red); }
+  .priority.p1 { border-left:4px solid #d58a19; }
+  .priority.p2 { border-left:4px solid var(--green); }
+  .check { list-style:none; margin:5px 0 0; }
+  .check li { padding-left:19px; position:relative; }
+  .check li:before { content:"□"; position:absolute; left:0; color:var(--green); font-weight:700; }
+  .note { background:#f3f6f3; border-radius:4px; padding:9px 11px; font-size:9pt; margin:10px 0; }
+  .footer { position:absolute; bottom:7mm; left:18mm; right:18mm; padding-top:4px; border-top:1px solid var(--line); color:var(--muted); font-size:8pt; display:flex; justify-content:space-between; }
+  .page-break { break-before:auto; }
+  @page { size:A4; margin:0; }
+  @media print { body { background:#fff; } .sheet { margin:0; box-shadow:none; width:210mm; min-height:297mm; break-after:page; } .sheet:last-child { break-after:auto; } }
+</style>
+</head>
+<body>
+<section class="sheet">
+  <div class="topline"><span>FARMDIRECT · IMPLEMENTATION BRIEF</span><span>CODEX TASK DOCUMENT</span></div>
+  <h1>Registration, Location &amp;<br>Remaining Website Work</h1>
+  <p class="lead">Codex-এর জন্য implementation requirements, বর্তমান অবস্থার নোট, priority এবং acceptance checklist।</p>
+  <div class="meta"><span class="tag">তারিখ: ১ নভেম্বর ২০২৬</span><span class="tag">Project: Laravel 12 · FarmDirect</span><span class="tag">Scope: Client + Farmer + platform gaps</span></div>
+  <div class="callout"><strong>মূল সিদ্ধান্ত:</strong> Client ও Farmer registration-এ email বাধ্যতামূলক হবে না। তার বদলে NID number বাধ্যতামূলক হবে। District এবং Upazila দুটিই বাধ্যতামূলক location তথ্য হবে।</div>
+
+  <h2>১. নতুন Registration Requirements</h2>
+  <div class="item">
+    <div class="item-head"><span class="num">01</span><h3>NID number দিয়ে registration</h3><span class="status gap">এখনো নেই</span></div>
+    <ul>
+      <li>Client এবং Farmer, দুই registration form-এই NID field required করতে হবে।</li>
+      <li>Email optional হবে; email না থাকলেও account তৈরি হতে হবে। Email-এর জায়গায় NID-কে primary login identifier হিসেবে ব্যবহার করতে হবে।</li>
+      <li>NID server-side validate করতে হবে এবং duplicate NID দিয়ে দ্বিতীয় account আটকাতে হবে। Accepted digit-length/format বাংলাদেশি NID policy অনুযায়ী নির্ধারণ করতে হবে।</li>
+      <li>NID ব্যক্তিগত তথ্য: database-এ নিরাপদে রাখুন, logs বা public pages-এ প্রকাশ করবেন না, display করলে mask করুন।</li>
+      <li>Existing email-based accounts যেন lock out না হয়; login-এ NID এবং পুরোনো email দুটোই support করার migration strategy রাখুন।</li>
+    </ul>
+  </div>
+  <div class="item">
+    <div class="item-head"><span class="num">02</span><h3>District + Upazila বাধ্যতামূলক</h3><span class="status partial">আংশিক আছে</span></div>
+    <ul>
+      <li>দুই registration form-এই District এবং Upazila required হবে; address field-কে Upazila-এর বিকল্প হিসেবে ব্যবহার করা যাবে না।</li>
+      <li>Upazila আলাদা field হিসেবে users এবং farmers record-এ সংরক্ষণ করতে হবে। Client registration বর্তমানে upazila save করে না; Farmer registration-এ address-কে upazila হিসেবে কপি করা হচ্ছে।</li>
+      <li>District বদলালে সংশ্লিষ্ট Upazila দেখানো উত্তম। নির্ভরযোগ্য upazila dataset না থাকলে প্রথম ধাপে required text/select input ব্যবহার করুন এবং data source স্পষ্ট রাখুন।</li>
+      <li>Profile edit ও farmer location pages-এও নতুন তথ্য যেন হারিয়ে না যায়, তা যাচাই করুন।</li>
+    </ul>
+  </div>
+  <div class="item">
+    <div class="item-head"><span class="num">03</span><h3>District search এবং A–Z ordering</h3><span class="status partial">Sort আছে, search নেই</span></div>
+    <ul>
+      <li>District picker-এ searchable/filterable control দিন, যাতে নাম লিখে district দ্রুত খুঁজে পাওয়া যায়।</li>
+      <li>Initial list এবং filtered results সবসময় district name অনুযায়ী A–Z হবে। Search করলে sort order ভাঙা যাবে না।</li>
+      <li>বর্তমান registration controller-এ district-গুলো server-side A–Z sort হয়; shared picker এখন plain HTML select। বিদ্যমান ordering বজায় রেখে search যোগ করুন।</li>
+    </ul>
+  </div>
+  <div class="note"><strong>Interpretation:</strong> A–Z requirement-টি district picker/search-এর জন্য ধরা হয়েছে। Product search results-এর sorting আলাদা requirement হলে implementation-এর আগে নিশ্চিত করতে হবে।</div>
+  <div class="footer"><span>FarmDirect · Codex implementation brief</span><span>Page 1 of 3</span></div>
+</section>
+
+<section class="sheet page-break">
+  <div class="topline"><span>IMPLEMENTATION BACKLOG</span><span>PRIORITY ORDER</span></div>
+  <h2>২. Review থেকে পাওয়া বাকি কাজ</h2>
+  <p class="small">নিচের কাজগুলো current code review-তে দেখা gap; registration changes-এর সঙ্গে এগুলোও backlog-এ রাখুন।</p>
+
+  <div class="priority p0">
+    <h3>P0 · Farmer approval flow শেষ করা</h3>
+    <p>Farmer signup account-কে inactive/pending করে, কিন্তু admin user-management page demo data দেখায়। Real approval/rejection actions যোগ করতে হবে; approve হলে account active হবে, reject হলে status/reason সংরক্ষিত হবে এবং farmer-কে ফল জানাতে হবে।</p>
+  </div>
+  <div class="priority p0">
+    <h3>P0 · Payment status সঠিক করা</h3>
+    <p>bKash/Nagad/Card gateway verification ছাড়া order বর্তমানে paid/completed হয়ে যায়। Gateway/API callback যাচাই না হওয়া পর্যন্ত online payment pending রাখুন; success, failure, retry, duplicate callback এবং refund flow implement ও test করুন।</p>
+  </div>
+  <div class="priority p1">
+    <h3>P1 · Admin panel-কে database-backed করা</h3>
+    <p>Dashboard, users/roles, categories, transactions, reports, backup এবং settings বর্তমানে static/demo data বা browser localStorage-নির্ভর। Real models/queries, authorized actions, validation, pagination ও audit trail প্রয়োজন।</p>
+  </div>
+  <div class="priority p1">
+    <h3>P1 · Inventory shipment consistency</h3>
+    <p>Order ship করার আগে warehouse-এ পুরো quantity আছে কি না validate করুন। Shortage হলে shipment block হবে এবং data partial decrement হবে না; প্রয়োজন হলে transaction/locking দিয়ে atomic update করুন।</p>
+  </div>
+  <div class="priority p1">
+    <h3>P1 · Automated tests এবং build ঠিক করা</h3>
+    <p>বর্তমান feature test homepage-এ 500 দেয়, কারণ in-memory SQLite test database-এ schema migrate হয় না। Test setup-এ migrations/seed data যোগ করে registration, login, farmer approval, order, payment ও inventory workflow cover করুন।</p>
+    <p>`npm run build`-ও বর্তমান environment-এ verify হয়নি: `vite` executable পাওয়া যায়নি। Dependencies install করে clean build নিশ্চিত করুন।</p>
+  </div>
+  <div class="priority p2">
+    <h3>P2 · User-facing completion</h3>
+    <ul>
+      <li>Client, Farmer এবং Manager notifications demo data থেকে real persisted notifications-এ নিন।</li>
+      <li>Contact message database-এ জমা হয়; admin inbox, read/unread state এবং reply workflow যোগ করুন।</li>
+      <li>Password reset flow যোগ করুন; current routes-এ এটি নেই।</li>
+      <li>Farmer profile-এর Follow action-কে বাস্তবভাবে persist করুন, অথবা feature প্রস্তুত না হওয়া পর্যন্ত UI থেকে সরান।</li>
+    </ul>
+  </div>
+  <div class="footer"><span>FarmDirect · Codex implementation brief</span><span>Page 2 of 3</span></div>
+</section>
+
+<section class="sheet page-break">
+  <div class="topline"><span>DEFINITION OF DONE</span><span>TESTABLE ACCEPTANCE</span></div>
+  <h2>৩. Acceptance Checklist</h2>
+  <p>প্রতিটি item complete বলতে UI, server validation, database persistence এবং automated test-এ একই behavior নিশ্চিত হওয়া বোঝাবে।</p>
+  <ul class="check">
+    <li>Client ও Farmer email ছাড়া NID দিয়ে registration করতে পারে।</li>
+    <li>NID অনুপস্থিত, invalid বা duplicate হলে server request reject করে; duplicate account তৈরি হয় না।</li>
+    <li>Email দেওয়া optional; দেওয়া হলে existing email uniqueness behavior বজায় থাকে।</li>
+    <li>দুই registration form-এ District ও Upazila বাধ্যতামূলক এবং আলাদা database field-এ save হয়।</li>
+    <li>District picker-এ search/filter কাজ করে; unfiltered এবং filtered option list A–Z থাকে।</li>
+    <li>Existing email-based account দিয়ে login চলে; নতুন account NID দিয়ে login করতে পারে।</li>
+    <li>Farmer request admin/authorized user approve বা reject করতে পারে; approval-এর পর farmer login করতে পারে।</li>
+    <li>Online payment verification না হওয়া পর্যন্ত order paid নয়; callback-এর ফল transaction status-এ সঠিকভাবে প্রতিফলিত হয়।</li>
+    <li>Insufficient warehouse stock-এ order ship হয় না এবং কোনো stock row partial update হয় না।</li>
+    <li>`php artisan test` সফল; registration এবং critical order/payment flow-এর feature tests আছে।</li>
+    <li>Dependencies install করার পর `npm run build` সফল।</li>
+  </ul>
+
+  <h2>৪. Codex-কে দেওয়ার নির্দেশনা</h2>
+  <div class="callout">
+    <p>এই brief অনুযায়ী প্রথমে registration/NID/location/A–Z requirements implement করুন। Existing Laravel patterns ও accounts compatibility বজায় রাখুন। Database migration, validation, views, authentication, profile forms এবং automated tests একই change-এ update করুন। তারপর P0 backlog-এর farmer approval ও payment correctness ঠিক করুন। কোনো demo/localStorage action-কে production action হিসেবে রেখে দেবেন না। শেষে focused tests, full test suite এবং frontend build চালিয়ে ফল report করুন।</p>
+  </div>
+  <h2>৫. Implementation Order</h2>
+  <ol>
+    <li>NID schema + secure storage + backward-compatible login strategy।</li>
+    <li>Client/Farmer form, server validation, District search/A–Z, Upazila persistence।</li>
+    <li>Farmer approval flow এবং admin action।</li>
+    <li>Payment verification ও warehouse stock consistency।</li>
+    <li>Test suite, real admin pages, notifications/contact/password reset backlog।</li>
+  </ol>
+  <p class="small">Sensitive NID data production-এ নেওয়ার আগে access control, retention, masking, encryption এবং applicable privacy/legal requirements review করতে হবে।</p>
+  <div class="footer"><span>Prepared from current workspace review and requested requirements</span><span>Page 3 of 3</span></div>
+</section>
+</body>
+</html>
