@@ -17,6 +17,10 @@ class OrderService
      */
     public static function place(int $userId, array $lines, array $d): array
     {
+        if (! AccountVerification::isVerified($userId)) {
+            throw new OrderException('Verify your account before placing an order.');
+        }
+
         if (! in_array(($d['payment'] ?? null), ['cod', 'bkash', 'nagad', 'bank'], true)) {
             throw new OrderException('Choose a valid payment method.');
         }

@@ -32,6 +32,7 @@ class RegistrationTest extends TestCase
     public function test_client_can_register_and_login_with_nid_without_email(): void
     {
         $this->post(route('signup.store'), [
+            'account_type' => 'client',
             'name' => 'Client Test',
             'phone' => '01700000000',
             'nid_number' => '1234567890',
@@ -57,7 +58,8 @@ class RegistrationTest extends TestCase
 
     public function test_farmer_registration_persists_upazila_separately(): void
     {
-        $this->post(route('register.farmer.store'), [
+        $this->post(route('signup.store'), [
+            'account_type' => 'farmer',
             'name' => 'Farmer Test',
             'phone' => '01700000001',
             'nid_number' => '1234567890123',
@@ -67,7 +69,7 @@ class RegistrationTest extends TestCase
             'address' => 'Village Road',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-        ])->assertRedirect(route('home'));
+        ])->assertRedirect(route('farmer.dashboard'));
 
         $farmer = Farmer::with('user')->firstOrFail();
         $this->assertSame('Savar', $farmer->upazila);
@@ -78,6 +80,7 @@ class RegistrationTest extends TestCase
     public function test_nid_and_upazila_are_required(): void
     {
         $this->from(route('signup'))->post(route('signup.store'), [
+            'account_type' => 'client',
             'name' => 'Client Test',
             'phone' => '01700000000',
             'district' => $this->district->name,

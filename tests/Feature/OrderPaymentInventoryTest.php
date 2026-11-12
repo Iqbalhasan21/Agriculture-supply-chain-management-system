@@ -32,6 +32,12 @@ class OrderPaymentInventoryTest extends TestCase
         $district = District::create(['division_id' => $division->id, 'name' => 'Dhaka']);
         $category = Category::create(['name' => 'Vegetables', 'slug' => 'vegetables']);
         $this->client = User::factory()->create(['role' => 'client']);
+        DB::table('user_verifications')->insert([
+            'user_id' => $this->client->id,
+            'status' => 'verified',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         $this->manager = User::factory()->create(['role' => 'manager']);
         $farmerUser = User::factory()->create(['role' => 'farmer']);
         $farmer = Farmer::create([
@@ -66,10 +72,11 @@ class OrderPaymentInventoryTest extends TestCase
         $this->assertDatabaseHas('payments', ['order_id' => $order['id'], 'method' => 'cod', 'status' => 'pending']);
     }
 
-    public function test_unverified_online_payment_cannot_create_an_order(): void
+    public function test_unverified_client_cannot_create_an_order_through_the_service(): void
     {
         $this->expectException(OrderException::class);
-        $this->expectExceptionMessage('Online payments are unavailable');
+        DB::table('user_verifications')->where('user_id', $this->client->id)->update(['status' => 'not_submitted']);
+        $this->expectExceptionMessage('Verify your account before placing an order.');
 
         OrderService::place($this->client->id, [['id' => $this->productId, 'qty' => 1]], [
             'name' => 'Client', 'phone' => '01700000000', 'district' => 'Dhaka', 'address' => 'Road 1', 'payment' => 'bkash',

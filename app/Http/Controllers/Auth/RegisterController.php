@@ -27,6 +27,7 @@ class RegisterController
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(Shop::setting('allow_registration', '1') === '1', 403, 'Registration is currently unavailable.');
         $choice = $request->validate(['account_type' => ['required', 'in:client,farmer,manager,admin']]);
         return match ($choice['account_type']) {
             'farmer' => $this->storeFarmer($request),
